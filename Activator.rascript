@@ -15,13 +15,15 @@
 //        0x0D = Rod 5
 //        0x0E = Rod 6
 //        0x0F = Rod 7
-function ReactorSlot1() => byte(0x007C7B)
+function ReactorSlotAddress() => 0x007C7B
 
 // $7D6E: [8-bit] Number Of Lives
 //        Set to 0x09 when a new game starts. 0x00 when not in game (including demo mode).
 function NumberOfLives() => byte(0x007D6E)
 
 // $A6D6: [8-bit] Current Room Number
+//
+//        0x61 = Reactor Core (Room 97)
 function CurrentRoomNumber() => byte(0x00A6D6)
 
 // $A6DA: [32-bit] Current Score
@@ -38,3 +40,76 @@ function RemainingMinutes() => byte(0x00A6E0)
 //        
 //        This value decreases by 1 every second the game is active. When this value would otherwise decrease but it's current value is 0, it is instead reset back to 59 (0x3B) and the remaining minutes value at address 0x00A6E0 is decreased by 1.
 function RemainingSecondsInCurrentMinute() => byte(0x00A6E2)
+
+
+// ---------------------------
+// -------- Constants --------
+// ---------------------------
+
+ROOM_REACTOR_ENTRANCE = 96
+ROOM_REACTOR = 97
+
+
+
+// ---------------------------
+// ----- Logic Functions -----
+// ---------------------------
+
+function InGame() => NumberOfLives() > 0 && RemainingMinutes() < 30 && RemainingTimeInSeconds() > 0
+
+function RemainingTimeInSeconds() => (RemainingMinutes() * 60) + RemainingSecondsInCurrentMinute()
+
+function ReactorCoreSlot(index) => byte(ReactorSlotAddress() + index)
+
+
+
+// ---------------------------
+// ------ Achievements -------
+// ---------------------------
+
+achievement(
+    title = "The Beginning And The End", points = 1,
+    description = "Locate the Power Chamber",
+    type = "progression",
+    trigger = InGame() && prev(CurrentRoomNumber()) == ROOM_REACTOR_ENTRANCE && CurrentRoomNumber() == ROOM_REACTOR
+)
+
+
+// -------------------------
+// ----- Leaderboards ------
+// -------------------------
+
+
+
+// -------------------------
+// ----- Rich Presence -----
+// -------------------------
+
+function InGameRP() => InGame() && !(RemainingMinutes() == 0 && prior(RemainingSecondsInCurrentMinute()) == 0 && RemainingSecondsInCurrentMinute() == 59)
+
+FuelRodLookup = {
+    0xFF: "_",
+    0x09: "1",
+    0x0A: "2",
+    0x0B: "3",
+    0x0C: "4",
+    0x0D: "5",
+    0x0E: "6",
+    0x0F: "7"
+}
+
+rich_presence_conditional_display(!InGameRP(), "In Menus")
+
+rich_presence_display("Score: {0} ● Time Left: {1} ● Lives: {2} ● Room: {3} ● Fuel Rods: |{4}|{5}|{6}|{7}|{8}|{9}|{10}|",
+    rich_presence_value("Score", CurrentScore()),
+    rich_presence_value("Time", RemainingTimeInSeconds(), format="SECS"),
+    rich_presence_value("Lives", NumberOfLives()),
+    rich_presence_value("Room", CurrentRoomNumber()),
+    rich_presence_lookup("Slot1", ReactorCoreSlot(0), FuelRodLookup, fallback="_"),
+    rich_presence_lookup("Slot2", ReactorCoreSlot(1), FuelRodLookup, fallback="_"),
+    rich_presence_lookup("Slot3", ReactorCoreSlot(2), FuelRodLookup, fallback="_"),
+    rich_presence_lookup("Slot4", ReactorCoreSlot(3), FuelRodLookup, fallback="_"),
+    rich_presence_lookup("Slot5", ReactorCoreSlot(4), FuelRodLookup, fallback="_"),
+    rich_presence_lookup("Slot6", ReactorCoreSlot(5), FuelRodLookup, fallback="_"),
+    rich_presence_lookup("Slot7", ReactorCoreSlot(6), FuelRodLookup, fallback="_")
+)
