@@ -49,7 +49,16 @@ function RemainingSecondsInCurrentMinute() => byte(0x00A6E2)
 ROOM_REACTOR_ENTRANCE = 96
 ROOM_REACTOR = 97
 
+RACTOR_CORE_SLOTS = [0, 1, 2, 3, 4, 5, 6]
 
+FUEL_ROD_EMPTY = 0xFF
+FUEL_ROD_1 = 0x09
+FUEL_ROD_2 = 0x0A
+FUEL_ROD_3 = 0x0B
+FUEL_ROD_4 = 0x0C
+FUEL_ROD_5 = 0x0D
+FUEL_ROD_6 = 0x0E
+FUEL_ROD_7 = 0x0F
 
 // ---------------------------
 // ----- Logic Functions -----
@@ -61,6 +70,40 @@ function RemainingTimeInSeconds() => (RemainingMinutes() * 60) + RemainingSecond
 
 function ReactorCoreSlot(index) => byte(ReactorSlotAddress() + index)
 
+function PlacedFuelRodInPowerChamberOnThisFrame(fuelRod) {
+    result = false
+    
+    for slotIndex in RACTOR_CORE_SLOTS {
+        slot = ReactorCoreSlot(slotIndex)
+        result = result || (prev(slot) == FUEL_ROD_EMPTY && slot == fuelRod)
+    }
+    
+    return InGame() && result
+}
+
+function IsReactorCoreSlotFilled(slotIndex) => ReactorCoreSlot(slotIndex) >= FUEL_ROD_1 && ReactorCoreSlot(slotIndex) <= FUEL_ROD_7
+
+function CompletedGameOnThisFrame() {
+    return InGame() &&
+        prev(ReactorCoreSlot(6)) == FUEL_ROD_EMPTY && IsReactorCoreSlotFilled(6) &&
+        IsReactorCoreSlotFilled(5) &&
+        IsReactorCoreSlotFilled(4) &&
+        IsReactorCoreSlotFilled(3) &&
+        IsReactorCoreSlotFilled(2) &&
+        IsReactorCoreSlotFilled(1) &&
+        IsReactorCoreSlotFilled(0)
+}
+
+function CompletedPerfectGameOnThisFrame() {
+    return InGame() &&
+        prev(ReactorCoreSlot(6)) == FUEL_ROD_EMPTY && ReactorCoreSlot(6) == FUEL_ROD_7 &&
+        ReactorCoreSlot(5) == FUEL_ROD_6 &&
+        ReactorCoreSlot(4) == FUEL_ROD_5 &&
+        ReactorCoreSlot(3) == FUEL_ROD_4 &&
+        ReactorCoreSlot(2) == FUEL_ROD_3 &&
+        ReactorCoreSlot(1) == FUEL_ROD_2 &&
+        ReactorCoreSlot(0) == FUEL_ROD_1
+}
 
 
 // ---------------------------
@@ -68,10 +111,82 @@ function ReactorCoreSlot(index) => byte(ReactorSlotAddress() + index)
 // ---------------------------
 
 achievement(
+    id = 484403, badge = "549300",
     title = "The Beginning And The End", points = 1,
     description = "Locate the Power Chamber",
     type = "progression",
     trigger = InGame() && prev(CurrentRoomNumber()) == ROOM_REACTOR_ENTRANCE && CurrentRoomNumber() == ROOM_REACTOR
+)
+
+achievement(
+    id = 484405, badge = "549301",
+    title = "The Activator I", points = 5,
+    description = "Place fuel rod #1 in any slot at the Power Chamber",
+    type = "progression",
+    trigger = PlacedFuelRodInPowerChamberOnThisFrame(FUEL_ROD_1)
+)
+
+achievement(
+    id = 484406, badge = "549302",
+    title = "The Activator II", points = 5,
+    description = "Place fuel rod #2 in any slot at the Power Chamber",
+    type = "progression",
+    trigger = PlacedFuelRodInPowerChamberOnThisFrame(FUEL_ROD_2)
+)
+
+achievement(
+    id = 484407, badge = "549303",
+    title = "The Activator III", points = 5,
+    description = "Place fuel rod #3 in any slot at the Power Chamber",
+    type = "progression",
+    trigger = PlacedFuelRodInPowerChamberOnThisFrame(FUEL_ROD_3)
+)
+
+achievement(
+    id = 484408, badge = "549304",
+    title = "The Activator IV", points = 5,
+    description = "Place fuel rod #4 in any slot at the Power Chamber",
+    type = "progression",
+    trigger = PlacedFuelRodInPowerChamberOnThisFrame(FUEL_ROD_4)
+)
+
+achievement(
+    id = 484409, badge = "549305",
+    title = "The Activator V", points = 5,
+    description = "Place fuel rod #5 in any slot at the Power Chamber",
+    type = "progression",
+    trigger = PlacedFuelRodInPowerChamberOnThisFrame(FUEL_ROD_5)
+)
+
+achievement(
+    id = 484410, badge = "549306",
+    title = "The Activator VI", points = 5,
+    description = "Place fuel rod #6 in any slot at the Power Chamber",
+    type = "progression",
+    trigger = PlacedFuelRodInPowerChamberOnThisFrame(FUEL_ROD_6)
+)
+
+achievement(
+    id = 484411, badge = "549307",
+    title = "The Activator VII", points = 5,
+    description = "Place fuel rod #7 in any slot at the Power Chamber",
+    type = "progression",
+    trigger = PlacedFuelRodInPowerChamberOnThisFrame(FUEL_ROD_7)
+)
+
+achievement(
+    id = 484413, badge = "549310",
+    title = "Never Trust a Programmer", points = 25,
+    description = "Place all fuel rods at the Power Chamber in any order in a single game",
+    type = "win_condition",
+    trigger = CompletedGameOnThisFrame()
+)
+
+achievement(
+    id = 484476, badge = "549376",
+    title = "Hero of Antari", points = 50,
+    description = "Place all fuel rods at the Power Chamber in ascending numerical order in a single game to receive a 100,000 point bonus",
+    trigger = CompletedPerfectGameOnThisFrame()
 )
 
 
